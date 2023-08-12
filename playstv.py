@@ -201,8 +201,7 @@ class UserProfile:
         self.videos = [
             Video(id=str(x["embedURL"]).split("/")[-1], title=x["name"], description="")
             for x in video_data
-        ][:5]
-        # TODO: Remove first 5 element selector
+        ]
 
         self.__last_video_id__ = self.videos[-1].id
 
