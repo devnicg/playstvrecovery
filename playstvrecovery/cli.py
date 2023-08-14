@@ -38,5 +38,9 @@ def main(output_path: Annotated[Optional[Path], typer.Option()]):
     user_profile.download_videos(output_path.name)
 
 
-if __name__ == "__main__":
+def main():
     app()
+
+
+if __name__ == "__main__":
+    main()

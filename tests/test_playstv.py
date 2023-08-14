@@ -1,4 +1,4 @@
-from playstv import UserProfile, Video
+from playstvrecovery.playstv import UserProfile
 
 
 test_username = "MrNicola"
