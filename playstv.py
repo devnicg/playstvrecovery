@@ -1,17 +1,12 @@
-from asyncio.proactor_events import _ProactorBasePipeTransport
 from datetime import datetime
-from genericpath import isfile
 import json
 from operator import concat
 import os
-from pathlib import Path
 from time import sleep
-from typing import Annotated, Callable, Optional
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, NavigableString, Tag
 import requests
 from requests.models import PreparedRequest
-import typer
 from rich import print
 from rich.progress import track
 
