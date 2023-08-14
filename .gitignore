@@ -2,4 +2,4 @@ test.html
 test.json
 .DS_Store
 Downloads/**
-__pycache__/**
+*__pycache__*

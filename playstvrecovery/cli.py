@@ -8,8 +8,10 @@ app = typer.Typer()
 
 
 @app.command()
-def main(output_path: Annotated[Optional[Path], typer.Option()]):
-    user = typer.prompt("What's your Plays.tv username?")
+def main(
+    output_path: Annotated[Optional[Path], typer.Option()],
+    user: Annotated[str, typer.Option()],
+):
     if not output_path.is_dir():
         structured_error("initialization", "Specified path is not a directory")
         return

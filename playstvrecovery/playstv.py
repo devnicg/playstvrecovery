@@ -72,12 +72,10 @@ class Video:
             return
 
         try:
-            structured_info("download", f"Starting download")
             file_name = concat(self.title, ".mp4")
             file_path = os.path.join(output_path, file_name)
 
             if os.path.isfile(file_path):
-                structured_info("download", f"Download of {self.title} already exists!")
                 return
 
             video_stream = requests.get(self.video_url, stream=True)
@@ -87,10 +85,6 @@ class Video:
                     if chunk:
                         file.write(chunk)
 
-            structured_info(
-                "download", f"[green]Successfully[/green] downloaded {self.title}"
-            )
-
         except:
             structured_error("download", f"Failed to download {self.title}")
             sleep(2)
@@ -99,7 +93,6 @@ class Video:
     def check_availability(self) -> bool:
         if self.valid:
             return True
-        structured_info("availability", f"Checking {self.title}")
         availability_api = WaybackMachineAvailabilityAPI(
             self.original_url, self.__wayback_user_agent__
         )
@@ -137,7 +130,7 @@ class UserProfile:
         self.__more_video_error__: bool = False
         self.__last_video_id__: str = str()
         self.__archive_video_data__: [] = []
-        self.__current_page_number__: int = 1
+        self.__current_page_number__: int = 0
         self.__wayback_user_agent__: str = str(
             "Mozilla/5.0 (Windows NT 5.1; rv:40.0) Gecko/20100101 Firefox/40.0"
         )
@@ -164,17 +157,30 @@ class UserProfile:
             structured_error("initialization", "Failed to retrieve user id")
 
     def check_video_availability(self) -> None:
+        structured_info(
+            "Availability",
+            f"Checking availability of videos (total: {len(self.videos)})",
+        )
         for vid_index in track(
             range(len(self.videos)), description="Checking video availability..."
         ):
             current_vid: Video = self.videos[vid_index]
             current_vid.check_availability()
 
+        valid_videos = [x for x in self.videos if x.valid]
+        structured_info(
+            "Availability",
+            f"[green]Successfully checked availability of videos ({len(valid_videos)} out of {len(self.videos)} valid)",
+        )
+
     def get_more_videos(self, timestamp: str | None = None) -> list[Video] | None:
-        if self.__current_page_number__ == 1:
+        if self.__current_page_number__ == 0:
             structured_info("more videos", "Starting queries for more videos")
+            self.__current_page_number__ += 1
         if self.__last_video_fetched__:
-            structured_info("more videos", "[green]Succesfully retrieved more videos")
+            structured_info(
+                "more videos", "[green]Succesfully querried for more videos"
+            )
             return
 
         if self.__more_video_error__:
@@ -209,7 +215,9 @@ class UserProfile:
         try:
             r = requests.get(query_url)
         except:
-            structured_error("more videos")
+            structured_error(
+                "more videos", "failed to retrieve more videos from playstv api"
+            )
 
         try:
             json_data = json.loads(r.text)
@@ -230,16 +238,6 @@ class UserProfile:
             self.__last_video_fetched__ = True
         else:
             soup_body = BeautifulSoup(json_data["body"], "html.parser")
-
-            # TODO: Parse videos from json body attribute
-
-            # foreach .video-item get href from info div
-            # after retrieving this, take video_id from href (second element in path)
-            # create embeds url for this video_id
-            # in case recursive function case is hit, check availability of all videos
-            # after which the recursive function ends
-            # ONLY ADD UNIQUE ID
-
             # Get video-items
             video_item_elements = soup_body.find_all("li", {"class": "video-item"})
             current_ids = [x.id for x in self.videos]
@@ -269,16 +267,22 @@ class UserProfile:
             self.videos += video_list
             self.__last_video_id__ = current_ids[-1]
             self.__current_page_number__ += 1
+            structured_info(
+                "More videos",
+                f"[bright_green]Successfully added [bold]{len(video_list)} videos[/bold] (total: {len(self.videos)})",
+            )
         # TODO: Test recursive function
         self.get_more_videos()
 
     def download_videos(self, output_path: str) -> None:
-        for video_index in track(range(len(self.videos)), "Downloading videos..."):
+        valid_videos: list[Video] = [x for x in self.videos if x.valid]
+        structured_info(
+            "download", f"Starting download process for {len(valid_videos)} videos"
+        )
+        for video_index in track(range(len(valid_videos)), "Downloading videos..."):
             current_video: Video = self.videos[video_index]
-            if not current_video.valid:
-                continue
-            structured_info("download", f"Attempting to download {current_video.title}")
             current_video.download_video(output_path)
+        structured_info("download", "[green]Successfully completed download process")
 
     def check_availability(self) -> bool:
         availability_api = WaybackMachineAvailabilityAPI(

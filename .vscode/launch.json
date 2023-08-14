@@ -8,10 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "cli.py",
+            "program": "playstvrecovery/cli.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--output-path=./Downloads"]
+            "args": ["--output-path=./Downloads", "--user=MrNicola"]
         }
     ]
 }
