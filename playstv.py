@@ -102,6 +102,8 @@ class Video:
             return
 
     def check_availability(self) -> bool:
+        if self.valid:
+            return True
         structured_info("availability", f"Checking {self.title}")
         availability_api = WaybackMachineAvailabilityAPI(
             self.original_url, self.__wayback_user_agent__
@@ -137,9 +139,10 @@ class UserProfile:
         self.__user_id__: str = str()
         self.__module_url__: str = "https://plays.tv/ws/module"
         self.__last_video_fetched__: bool = False
+        self.__more_video_error__: bool = False
         self.__last_video_id__: str = str()
         self.__archive_video_data__: [] = []
-        self.__current_page_number__: int = 0
+        self.__current_page_number__: int = 1
         self.__wayback_user_agent__: str = str(
             "Mozilla/5.0 (Windows NT 5.1; rv:40.0) Gecko/20100101 Firefox/40.0"
         )
@@ -172,20 +175,27 @@ class UserProfile:
             current_vid: Video = self.videos[vid_index]
             current_vid.check_availability()
 
-    def get_more_videos(self) -> list[Video] | None:
+    def get_more_videos(self, timestamp: str | None = None) -> list[Video] | None:
+        if self.__current_page_number__ == 1:
+            structured_info("more videos", "Starting queries for more videos")
         if self.__last_video_fetched__:
-            self.check_video_availability()
+            structured_info("more videos", "[green]Succesfully retrieved more videos")
             return
+
+        if self.__more_video_error__:
+            structured_warning("more videos", "Stopping queries for more videos")
+            return
+
         video_list: list[Video] = []
 
         params = {
-            "infinite_scroll": True,
-            "infinite_scroll_fire_only": True,
-            "custom_loading_module_state": "appending",
-            "page_num": self.__current_page_number__ + 1,
-            "target_user_id": self.__user_id__,
-            "last_id": self.__last_video_id__,
             "section": "videos",
+            "page_num": self.__current_page_number__,
+            "target_user_id": self.__user_id__,
+            "infinite_scroll": True,
+            "last_id": self.__last_video_id__,
+            "custom_loading_module_state": "appending",
+            "infinite_scroll_fire_only": True,
             "format": "application/json",
             "id": "UserVideosMod",
         }
@@ -196,30 +206,74 @@ class UserProfile:
         parsed_archive_url = urlparse(self.archive_url)
 
         #
+        if not timestamp:
+            query_url = f"{parsed_archive_url.scheme}://{parsed_archive_url.netloc}/{'/'.join(parsed_archive_url.path.split('/')[1:3])}/{module_url.url}"
+        else:
+            query_url = f"{parsed_archive_url.scheme}://{parsed_archive_url.netloc}/{parsed_archive_url.path.split('/')[1]}/{timestamp}/{module_url.url}"
 
-        query_url = f"{parsed_archive_url.scheme}://{parsed_archive_url.netloc}/{'/'.join(parsed_archive_url.path.split('/')[1:3])}/{module_url.url}"
+        try:
+            r = requests.get(query_url)
+        except:
+            structured_error("more videos")
 
-        r = requests.get(query_url)
-
-        json_data = json.loads(r.text)
+        try:
+            json_data = json.loads(r.text)
+        except:
+            alternate_timestamp = "20191210164752"
+            if parsed_archive_url.path.split("/")[2] != alternate_timestamp:
+                structured_warning(
+                    "more videos",
+                    "Failed to parse JSON, retrying with different timestamp",
+                )
+                self.get_more_videos(alternate_timestamp)
+            else:
+                structured_error("more videos", "JSON parsing error")
+                self.__more_video_error__ = True
+                return
 
         if json_data["body"] == "":
             self.__last_video_fetched__ = True
-            return
+        else:
+            soup_body = BeautifulSoup(json_data["body"], "html.parser")
 
-        soup_body = BeautifulSoup(json_data["body"], "html.parser")
+            # TODO: Parse videos from json body attribute
 
-        # TODO: Parse videos from json body attribute
+            # foreach .video-item get href from info div
+            # after retrieving this, take video_id from href (second element in path)
+            # create embeds url for this video_id
+            # in case recursive function case is hit, check availability of all videos
+            # after which the recursive function ends
+            # ONLY ADD UNIQUE ID
 
-        # foreach .video-item get href from info div
-        # after retrieving this, take video_id from href (second element in path)
-        # create embeds url for this video_id
-        # in case recursive function case is hit, check availability of all videos
-        # after which the recursive function ends
-        # ONLY ADD UNIQUE ID
-        self.videos += video_list
+            # Get video-items
+            video_item_elements = soup_body.find_all("li", {"class": "video-item"})
+            current_ids = [x.id for x in self.videos]
 
-        self.__current_page_number__ += 1
+            for video_item_element in video_item_elements:
+                # if video_id does not exist on item, continue
+                try:
+                    video_id = video_item_element.attrs["data-feed-id"]
+                except ValueError:
+                    continue
+
+                # if id not unique, continue
+                if video_id in current_ids:
+                    continue
+
+                try:
+                    title = video_item_element.find("a", {"class": "title"}).text
+                except:
+                    structured_warning(
+                        "more videos", f"Could not get title for {video_id}"
+                    )
+                    continue
+
+                video_list.append(Video(video_id, title, ""))
+                current_ids.append(video_id)
+
+            self.videos += video_list
+            self.__last_video_id__ = current_ids[-1]
+            self.__current_page_number__ += 1
         # TODO: Test recursive function
         self.get_more_videos()
 
@@ -271,7 +325,7 @@ class UserProfile:
         return True
 
     def get_initial_videos(self) -> None:
-        structured_info("")
+        structured_info("initial videos", "Getting initial videos from profile page")
         response = requests.get(self.archive_url)
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -286,6 +340,9 @@ class UserProfile:
         ]
 
         self.__last_video_id__ = self.videos[-1].id
+        structured_info(
+            "initial videos", "[green]Successfully retrieved initial videos"
+        )
 
     def expand_video_ids(self) -> None:
         # Query with last video id

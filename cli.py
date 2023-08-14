@@ -2,18 +2,18 @@ from pathlib import Path
 from typing import Annotated, Optional
 import typer
 
-from playstv import structured_error, get_profile, UserProfile
+from playstv import structured_error, get_profile
 
 app = typer.Typer()
 
 
 @app.command()
 def main(output_path: Annotated[Optional[Path], typer.Option()]):
+    user = typer.prompt("What's your Plays.tv username?")
     if not output_path.is_dir():
         structured_error("initialization", "Specified path is not a directory")
         return
 
-    user = typer.prompt("What's your Plays.tv username?")
     # Create UserProfile instance if archive is available
     user_profile = get_profile(user)
 
@@ -28,13 +28,14 @@ def main(output_path: Annotated[Optional[Path], typer.Option()]):
     # Get initial videos available from profile page
     user_profile.get_initial_videos()
 
+    # Get more videos
     user_profile.get_more_videos()
 
     # Check availability of videos
-    # user_profile.check_video_availability()
+    user_profile.check_video_availability()
 
     # Download available user videos
-    # user_profile.download_videos(output_path.name)
+    user_profile.download_videos(output_path.name)
 
 
 if __name__ == "__main__":
