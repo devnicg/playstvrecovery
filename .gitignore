@@ -3,3 +3,10 @@ test.json
 .DS_Store
 Downloads/**
 *__pycache__*
+playstvrecovery.egg-info/dependency_links.txt
+playstvrecovery.egg-info/PKG-INFO
+playstvrecovery.egg-info/requires.txt
+playstvrecovery.egg-info/SOURCES.txt
+playstvrecovery.egg-info/top_level.txt
+playstvrecovery/__pycache__/**
+dist/**

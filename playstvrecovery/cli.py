@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 import typer
 
-from playstv import structured_error, get_profile
+from .playstv import structured_error, get_profile
 
 app = typer.Typer()
 
@@ -43,6 +43,9 @@ def main(
 def main():
     app()
 
+
+if __name__ == "__call__":
+    main()
 
 if __name__ == "__main__":
     main()
