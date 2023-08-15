@@ -1,4 +1,3 @@
-from importlib.metadata import entry_points
 from setuptools import setup, find_packages
 
 setup(
@@ -6,7 +5,7 @@ setup(
     version="0.4.0",
     author="Nicola Goderis",
     description="A simple tool to recover deleted Plays.tv clips",
-    long_description=open("readme.md").read() + "\n\n",
+    long_description="playstv recovery tool",
     packages=find_packages(),
     entry_points={"console_scripts": ["playstvrec=playstvrecovery:main"]},
     install_requires=[
