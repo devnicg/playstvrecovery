@@ -18,6 +18,7 @@ class Video:
     def __init__(self, id: str, title: str, description: str) -> None:
         self.id: str = id
         self.valid: bool = False
+        self.download_succeeded: bool | None = None
         self.title: str = title
         self.video_url: str
         self.video_resolution: int
@@ -36,6 +37,8 @@ class Video:
             structured_error(
                 "download", f"Failed to get archive url content for {self.title}"
             )
+            self.download_succeeded = False
+            return
 
         archive_page_content = BeautifulSoup(archive_page.content, "html.parser")
 
@@ -45,7 +48,7 @@ class Video:
             structured_error(
                 "download", f"Could not find video element for {self.title}"
             )
-            sleep(2)
+            self.download_succeeded = False
             return
 
         try:
@@ -68,7 +71,7 @@ class Video:
             structured_error(
                 "download", f"Could not find source element for {self.title}"
             )
-            sleep(2)
+            self.download_succeeded = False
             return
 
         try:
@@ -87,7 +90,7 @@ class Video:
 
         except:
             structured_error("download", f"Failed to download {self.title}")
-            sleep(2)
+            self.download_succeeded = False
             return
 
     def check_availability(self) -> bool:
@@ -120,7 +123,6 @@ class Video:
 class UserProfile:
     def __init__(self, username: str) -> None:
         self.username: str = username
-        self.video_ids: [str] = []
         self.videos: [Video] = []
         self.original_url: str = str(f"https://plays.tv/u/{self.username}")
         self.archive_url: str = str()
@@ -135,9 +137,6 @@ class UserProfile:
             "Mozilla/5.0 (Windows NT 5.1; rv:40.0) Gecko/20100101 Firefox/40.0"
         )
         self.__archive_date__: datetime = datetime(year=2019, month=12, day=10)
-
-    def __str__(self) -> str:
-        return f"---------\nUsername: {self.username} \nPossible videos: {len(self.video_ids)} \nActual Videos {len(self.videos)} \n---------"
 
     def get_id_from_url(url: str) -> str:
         pass
@@ -282,7 +281,17 @@ class UserProfile:
         for video_index in track(range(len(valid_videos)), "Downloading videos..."):
             current_video: Video = self.videos[video_index]
             current_video.download_video(output_path)
-        structured_info("download", "[green]Successfully completed download process")
+
+        succeeded_downloads = [x for x in self.videos if x.download_succeeded]
+
+        if len(succeeded_downloads) > 0:
+            structured_info(
+                "download",
+                f"[green]Successfully completed download process {len(succeeded_downloads)}",
+            )
+            return
+
+        structured_info("download", "[red]No videos were downloaded!")
 
     def check_availability(self) -> bool:
         availability_api = WaybackMachineAvailabilityAPI(
