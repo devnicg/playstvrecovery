@@ -33,6 +33,8 @@ class Video:
     def download_video(self, output_path: str) -> None:
         try:
             archive_page = requests.get(self.archive_url)
+        except KeyboardInterrupt:
+            exit(1)
         except:
             structured_error(
                 "download", f"Failed to get archive url content for {self.title}"
@@ -44,6 +46,8 @@ class Video:
 
         try:
             video_element = archive_page_content.find("video")
+        except KeyboardInterrupt:
+            exit(1)
         except:
             structured_error(
                 "download", f"Could not find video element for {self.title}"
@@ -67,6 +71,8 @@ class Video:
                 self.video_url = "https:" + source_element.attrs["src"]
                 self.video_resolution = source_element.attrs["res"]
                 break
+        except KeyboardInterrupt:
+            exit(1)
         except:
             structured_error(
                 "download", f"Could not find source element for {self.title}"
@@ -87,7 +93,8 @@ class Video:
                 for chunk in video_stream.iter_content(chunk_size=1024 * 1024):
                     if chunk:
                         file.write(chunk)
-
+        except KeyboardInterrupt:
+            exit(1)
         except:
             structured_error("download", f"Failed to download {self.title}")
             self.download_succeeded = False
@@ -112,7 +119,7 @@ class Video:
 
         try:
             self.archive_url = possible_url.archive_url
-        except ArchiveNotInAvailabilityAPIResponse as ex:
+        except ArchiveNotInAvailabilityAPIResponse:
             self.valid = False
             return False
         else:
@@ -213,6 +220,8 @@ class UserProfile:
 
         try:
             r = requests.get(query_url)
+        except KeyboardInterrupt:
+            exit(1)
         except:
             structured_error(
                 "more videos", "failed to retrieve more videos from playstv api"
