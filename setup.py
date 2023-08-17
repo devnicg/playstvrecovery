@@ -1,8 +1,10 @@
 from setuptools import setup, find_packages
 
+from playstvrecovery import __version__
+
 setup(
     name="playstvrecovery",
-    version="0.4.0",
+    version=__version__,
     author="Nicola Goderis",
     description="A simple tool to recover deleted Plays.tv clips",
     long_description="playstv recovery tool",
