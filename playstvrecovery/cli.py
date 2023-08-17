@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 import typer
 
-from .playstv import structured_error, get_profile
+import playstv
 
 app = typer.Typer()
 
@@ -13,15 +13,15 @@ def main(
     user: Annotated[str, typer.Option()],
 ):
     if not output_path.is_dir():
-        structured_error("initialization", "Specified path is not a directory")
+        playstv.structured_error("initialization", "Specified path is not a directory")
         return
 
     # Create UserProfile instance if archive is available
-    user_profile = get_profile(user)
+    user_profile = playstv.get_profile(user)
 
     # return if user profile does not exist in archive
     if user_profile is None:
-        structured_error("initialization", "Could not get user profile")
+        playstv.structured_error("initialization", "Could not get user profile")
         return
 
     # Get user id
