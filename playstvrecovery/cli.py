@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 import typer
 
-from playstv import structured_error, get_profile
+from .playstv import structured_error, get_profile
 
 app = typer.Typer()
 
