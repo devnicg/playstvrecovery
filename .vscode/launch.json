@@ -11,7 +11,7 @@
             "program": "playstvrecovery/cli.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--output-path=./Downloads", "--user=MrNicola"]
+            "args": ["--output-path=./Downloads", "--user=marcusberg"]
         }
     ]
 }

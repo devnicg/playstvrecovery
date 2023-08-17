@@ -2,12 +2,16 @@ from setuptools import setup, find_packages
 
 from playstvrecovery import __version__
 
+with open("readme.md", "r") as md_file:
+    long_description = md_file.read()
+
 setup(
     name="playstvrecovery",
     version=__version__,
     author="Nicola Goderis",
     description="A simple tool to recover deleted Plays.tv clips",
-    long_description="playstv recovery tool",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=find_packages(),
     entry_points={"console_scripts": ["playstvrec=playstvrecovery:main"]},
     install_requires=[
