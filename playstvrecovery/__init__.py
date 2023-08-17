@@ -2,7 +2,7 @@
 
 __version__ = "0.4.2"
 
-from cli import main as cli_main
+from .cli import main as cli_main
 
 
 def main():
