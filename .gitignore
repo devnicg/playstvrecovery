@@ -10,3 +10,4 @@ playstvrecovery.egg-info/SOURCES.txt
 playstvrecovery.egg-info/top_level.txt
 playstvrecovery/__pycache__/**
 dist/**
+users_to_fetch.txt
